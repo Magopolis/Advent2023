@@ -1,0 +1,153 @@
+const title = "Advent3";
+fetch("https://raw.githubusercontent.com/Magopolis/Advent2023/main/data3")
+  .then((response) => response.text())
+  .then((data) => {
+    const splitData = data
+     .split("\n")
+     .filter((line) => line.length > 0)
+
+
+ 
+//console.log(splitData.length);
+    const symRegEx = /\*/gm;
+
+    const isStar = (x) => (symRegEx.test(x) ? true : false);
+   // console.log(isStar("*"), "ten");
+  //  console.log(isStar("."), "eleven");
+    const isNum = (x) => {
+      let numEx = /\d/;
+      return numEx.test(x);
+    };
+
+  //some new objects
+  
+  function positions(Tdata, row, col) {
+    const hasTopRow = row > 0;
+    const hasBottomRow = row < Tdata.length - 1;
+    const hasLeftCol = col > 0;
+    const hasRightCol = col < Tdata[row].length - 1;
+
+    return {
+        a: hasTopRow && hasLeftCol ? Tdata[row - 1][col - 1] : null,
+        b: hasTopRow ? Tdata[row - 1][col] : null,
+        c: hasTopRow && hasRightCol ? Tdata[row - 1][col + 1] : null,
+        d: hasRightCol ? Tdata[row][col + 1] : null,
+        e: hasRightCol && hasBottomRow ? Tdata[row + 1][col + 1] : null,
+        f: hasBottomRow ? Tdata[row + 1][col] : null,
+        g: hasBottomRow && hasLeftCol ? Tdata[row + 1][col - 1] : null,
+        h: hasLeftCol ? Tdata[row][col - 1] : null
+    };
+}
+//console.log(positions(splitData,1,35), "line 39, star passed to positions object")
+  
+  const getPositionFromKey = (key, row, col) => {
+    const offsets = {
+        'a': [-1, -1],
+        'b': [-1, 0],
+        'c': [-1, 1],
+        'd': [0, 1],
+        'e': [1, 1],
+        'f': [1, 0],
+        'g': [1, -1],
+        'h': [0, -1]
+    };
+
+    return { 
+        row: row + offsets[key][0], 
+        col: col + offsets[key][1] 
+    };
+};
+//console.log(getPositionFromKey("a", 1, 35), " line 58")//"row": 0, "col": 34 " line 58"
+  let numIdCount = 1;
+  let numStrs = [];
+splitData.forEach((line, rowIndex) => {
+    const matches = line.match(/\d+/g);
+    if (matches) {
+        matches.forEach((match) => {
+            let startCol = line.indexOf(match);
+            let endCol = startCol + match.length - 1;
+            numStrs.push({ number: match, id: numIdCount++, row: rowIndex, startCol, endCol });
+        });
+    }
+});
+
+
+ // console.log(getAdjacentCells(splitData, 1, 35));
+  
+let starObjects = [];
+let starIdCounter = 1;
+splitData.forEach((line, i) => {
+    for (let j = 0; j < line.length; j++) {
+        if (line[j] === '*') {
+            let adjacentCells = positions(splitData, i, j);
+           //console.log(getAdjacentCells(splitData, 1, 35), "107");
+          //console.log(positionsObject(splitData, 1, 35), "107");
+            let mySet = new Set();
+            let adjacentDigits = {};
+            let uniqueIds = {};
+
+            // Check each adjacent cell for numeric strings
+            for (let key in adjacentCells) {
+                if (adjacentCells.hasOwnProperty(key)) {
+                    let cellPos = getPositionFromKey(key, i, j); // Calculate position of the cell
+                    let digitString = numStrs.find(digit =>
+                        digit.row === cellPos.row && cellPos.col >= digit.startCol && cellPos.col <= digit.endCol
+                    );
+                    if (digitString) {
+                        mySet.add(digitString.id);
+                      //console.log(mySet);
+                        adjacentDigits[key] = digitString.number;
+                        uniqueIds = Array.from(mySet);;
+                    }
+                }
+            }
+
+            starObjects.push({ id: starIdCounter++, row: i, col: j, adjacentDigits, uniqueIds });
+        }
+    }
+});
+
+
+
+//console.log(starObjects[2]);
+//console.log("hello world");
+
+  
+    const starCount = splitData.reduce((count, line) => {
+      const matches = line.match(/\*/g); // Regular expression to find all '*' characters
+      return count + (matches ? matches.length : 0);
+    }, 0);
+
+    //console.log(starCount); // Total count of '*' in the entire splitData array
+    const wordCount = splitData.reduce((count, line) => {
+      const matches = line.match(/\d+/g);
+      return count + (matches ? matches.length : 0);
+    }, 0);
+  
+const gearRatios = starObjects.map(star => {
+    if (star.uniqueIds && star.uniqueIds.length === 2) {
+        // Get the numeric strings corresponding to the unique IDs
+        let numStr1 = numStrs.find(numStr => numStr.id === star.uniqueIds[0]);
+        let numStr2 = numStrs.find(numStr => numStr.id === star.uniqueIds[1]);
+
+        // Multiply their numeric values
+        if (numStr1 && numStr2) {
+            return parseInt(numStr1.number, 10) * parseInt(numStr2.number, 10);
+          
+        }
+    }
+    return null;
+}).filter(ratio => ratio !== null);  // Filter out null values
+const test = starObjects.filter((star) => {
+  if(star.uniqueIds.length === 2) {
+    return star;
+  }
+});
+//console.log(gearRatios.slice(0,10));
+  
+  const tot = gearRatios.reduce((a,b) => a+b);
+  console.log(tot);
+  //console.log(starObjects[0].uniqueIds);
+
+  })
+  .catch((error) => console.error("Error fetching data:", error));
